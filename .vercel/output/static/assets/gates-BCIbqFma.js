@@ -1,0 +1,1 @@
+import{r as e}from"./useRouter-CO-L024d.js";import{o as t}from"./index-BVy86eei.js";var n=e(),r=`/login`;function i({to:e=r}){return(0,n.jsx)(t,{to:e})}export{i as t};
