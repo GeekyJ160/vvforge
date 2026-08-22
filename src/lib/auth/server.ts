@@ -1,17 +1,17 @@
 /**
  * Self-hosted Better Auth for THIS app (server-only).
  *
- * Pre-wired for live preview + deploy — do not rewrite this file. To enable
- * local email/password, flip the flag in `./email-password` only (see auth skill).
+ * Supports local email/password, optional first-party Google, and optional
+ * federation through the Grok auth broker.
  *
  * The app runs its own Better Auth at `/api/auth/*`, so the session cookie stays
- * on this app's own origin. Sign-in federates to the shared **Grok auth broker**
- * (`GROK_AUTH_ISSUER`) via the `genericOAuth` plugin — the broker brokers the
- * upstream sign-in methods (Google, X, …) and holds their shared secrets; this
- * app only holds its own client id/secret and names the upstream it wants via
- * each provider's `idp` hint.
+ * on this app's own origin. When opted in, broker sign-in federates to the
+ * shared **Grok auth broker** (`GROK_AUTH_ISSUER`) via the `genericOAuth`
+ * plugin — the broker brokers the upstream sign-in methods (Google, X, …) and
+ * holds their shared secrets; this app only holds its own client id/secret and
+ * names the upstream it wants via each provider's `idp` hint.
  *
- * Tri-mode:
+ * Auth modes:
  *   - Deployed: the deployer injects a per-app `GROK_AUTH_*` + `BETTER_AUTH_URL`
  *     + `DATABASE_URL`, so real federated auth is persisted in Postgres.
  *   - Sandbox live preview: no injection -> falls back to the shared **preview
@@ -20,6 +20,10 @@
  *     and identities persist in the embedded PGLite DB (same DB as app data);
  *     the process restart wipes both. Live-preview iframe clients use a bearer
  *     token (partitioned cookies) — see `client.ts`.
+ *   - Local email/password is always available unless auth is explicitly disabled.
+ *     First-party Google is enabled when `GOOGLE_CLIENT_ID` and
+ *     `GOOGLE_CLIENT_SECRET` are both set.
+ *   - Grok broker federation is opt-in via `GROK_AUTH_BROKER_ENABLED=true`.
  *   - Explicitly off (`VITE_AUTH_ENABLED=false`): no providers; per-user server
  *     functions fall back to a dev user (see `verify.server.ts`).
  *
@@ -73,15 +77,24 @@ const env = (key: string): string | undefined => {
 const authDisabled = env("VITE_AUTH_ENABLED") === "false";
 
 // Broker federation creds: the deployer injects a per-app client when deployed;
-// otherwise fall back to the shared live-preview client, which the broker accepts
-// for any `*.grok-sandbox.com` callback (see `./preview`).
+// otherwise fall back to the shared live-preview client. The broker remains
+// disabled unless GROK_AUTH_BROKER_ENABLED=true because its preview client only
+// accepts callbacks on *.grok-sandbox.com hosts (see ./preview).
 const grokIssuer = env("GROK_AUTH_ISSUER") ?? GROK_ISSUER_DEFAULT;
 const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? PREVIEW_CLIENT_ID;
 const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET") ?? PREVIEW_CLIENT_SECRET;
+const grokBrokerEnabled = env("GROK_AUTH_BROKER_ENABLED") === "true";
 
-/** True when federated sign-in is active (real auth is enforced). */
-export const authConfigured =
-  !authDisabled && Boolean(grokClientId && grokClientSecret);
+const googleClientId = env("GOOGLE_CLIENT_ID");
+const googleClientSecret = env("GOOGLE_CLIENT_SECRET");
+const googleConfig =
+  googleClientId && googleClientSecret
+    ? { clientId: googleClientId, clientSecret: googleClientSecret }
+    : null;
+const googleConfigured = googleConfig !== null;
+
+/** True whenever auth is enabled; disabled auth is the only dev-user mode. */
+export const authConfigured = !authDisabled;
 
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
@@ -147,27 +160,28 @@ export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 
 // Built separately so the `betterAuth({...})` call stays easy to edit without
 // breaking brackets (models often trip on the conditional plugin spread).
-const grokOAuthPlugin = authConfigured
-  ? genericOAuth({
-      config: GROK_PROVIDERS.map(({ providerId, idp }) => ({
-        providerId,
-        clientId: grokClientId as string,
-        clientSecret: grokClientSecret as string,
-        // Prefer static endpoints over `discoveryUrl` so initiating (and
-        // completing) OAuth does not wait on a broker discovery fetch.
-        authorizationUrl: grokAuthorizationUrl,
-        tokenUrl: grokTokenUrl,
-        userInfoUrl: grokUserInfoUrl,
-        scopes: ["openid", "profile", "email"],
-        // `prompt: "login"` forces the broker to re-authenticate against the
-        // upstream on every sign-in instead of silently reusing an existing
-        // broker session. Combined with the broker sending Google
-        // `prompt=select_account`, the user always gets the account chooser
-        // and can pick (or switch) which account to sign in with.
-        authorizationUrlParams: { idp, prompt: "login" },
-      })),
-    })
-  : null;
+const grokOAuthPlugin =
+  authConfigured && grokBrokerEnabled && Boolean(grokClientId && grokClientSecret)
+    ? genericOAuth({
+        config: GROK_PROVIDERS.map(({ providerId, idp }) => ({
+          providerId,
+          clientId: grokClientId as string,
+          clientSecret: grokClientSecret as string,
+          // Prefer static endpoints over `discoveryUrl` so initiating (and
+          // completing) OAuth does not wait on a broker discovery fetch.
+          authorizationUrl: grokAuthorizationUrl,
+          tokenUrl: grokTokenUrl,
+          userInfoUrl: grokUserInfoUrl,
+          scopes: ["openid", "profile", "email"],
+          // `prompt: "login"` forces the broker to re-authenticate against the
+          // upstream on every sign-in instead of silently reusing an existing
+          // broker session. Combined with the broker sending Google
+          // `prompt=select_account`, the user always gets the account chooser
+          // and can pick (or switch) which account to sign in with.
+          authorizationUrlParams: { idp, prompt: "login" },
+        })),
+      })
+    : null;
 
 export const auth = betterAuth({
   baseURL,
@@ -175,23 +189,33 @@ export const auth = betterAuth({
   // globalThis so HMR doesn't invalidate PGLite-backed sessions (see above).
   secret: env("BETTER_AUTH_SECRET") ?? previewAuthSecret(),
   database,
+  ...(googleConfig
+    ? {
+        socialProviders: {
+          google: googleConfig,
+        },
+      }
+    : {}),
 
   // CSRF / origin check for credentialed auth POSTs (email sign-up/sign-in, …).
   // See `trustedOrigins` construction above — must cover live preview hosts AND
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
-  // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and X emails are
+  // Encrypt OAuth tokens at rest and treat configured providers as trusted
+  // first-party identities. The broker owns identity and X emails are
   // synthetic/unverified, so WITHOUT this a login can fail with
   // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and X carry DISTINCT emails, so this
-  // never merges them into one user — they stay separate identities.
+  // identity to an existing user). Distinct provider emails stay separate
+  // identities rather than merging into one user.
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: GROK_PROVIDERS.map((p) => p.providerId),
+      trustedProviders: [
+        ...(googleConfigured ? ["google"] : []),
+        ...(grokBrokerEnabled ? GROK_PROVIDERS.map((p) => p.providerId) : []),
+      ],
       // X's synthetic email is never "verified", so don't gate linking on the
       // local user's email-verified state.
       requireLocalEmailVerified: false,
@@ -204,7 +228,7 @@ export const auth = betterAuth({
   // flicker-prevention guidance (gate on `isPending`; SSR the session).
   session: { cookieCache: { enabled: true, maxAge: 300 } },
 
-  // Local email/password — toggled only via `./email-password` (not a plugin).
+  // Local email/password is configured in `./email-password` (not a plugin).
   ...(emailAndPasswordEnabled ? { emailAndPassword: { enabled: true } } : {}),
 
   // `__Host-` prefixed cookies: the browser REFUSES any same-named cookie that
@@ -226,8 +250,9 @@ export const auth = betterAuth({
   },
 
   plugins: [
-    // One genericOAuth provider per upstream (when auth is on), all federating
-    // to the broker with the SAME client and differing only by the `idp` hint.
+    // One genericOAuth provider per upstream when broker auth is explicitly
+    // enabled, all federating to the broker with the SAME client and differing
+    // only by the `idp` hint.
     ...(grokOAuthPlugin ? [grokOAuthPlugin] : []),
 
     // Accept `Authorization: Bearer <session-token>` as an alternative to the
