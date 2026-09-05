@@ -99,6 +99,15 @@ function MePage() {
           Sign out
         </button>
       </div>
+
+      <p className="mt-6 flex gap-3 text-xs text-subtle">
+        <Link to="/privacy" className="underline-offset-4 hover:underline">
+          Privacy
+        </Link>
+        <Link to="/terms" className="underline-offset-4 hover:underline">
+          Terms
+        </Link>
+      </p>
     </div>
   );
 }

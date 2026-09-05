@@ -368,7 +368,7 @@ function Onboard() {
           </Button>
         ) : (
           <Button className="flex-1" disabled={!canNext || saving} onClick={() => void finish()}>
-            {saving ? "Saving…" : "Enter Aura"}
+            {saving ? "Saving…" : "Enter Vicinity Vibe"}
           </Button>
         )}
       </div>

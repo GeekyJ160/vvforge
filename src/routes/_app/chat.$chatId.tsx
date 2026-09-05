@@ -102,7 +102,7 @@ function ChatPage() {
             <p className="font-display text-xl">Start specific</p>
             <p className="mt-2 text-sm text-muted">
               You overlap on {shared.length ? shared.join(", ") : "a quiet frequency"}.
-              Ask Aura for a first line, or write your own.
+              Ask Vicinity Vibe for a first line, or write your own.
             </p>
             <Button
               variant="outline"
@@ -118,7 +118,7 @@ function ChatPage() {
                 }
               }}
             >
-              {asking ? "Listening…" : "Ask Aura"}
+              {asking ? "Listening…" : "Ask Vicinity Vibe"}
             </Button>
             {openers?.length ? (
               <ul className="mt-4 space-y-2">
