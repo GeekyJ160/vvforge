@@ -7,7 +7,7 @@ export const Route = createFileRoute("/login")({ component: Login });
 function Login() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6">
-      <p className="text-xs uppercase tracking-[0.22em] text-muted">Aura</p>
+      <p className="text-xs uppercase tracking-[0.22em] text-muted">Vicinity Vibe</p>
       <h1 className="mt-3 font-display text-4xl font-medium">Sign in</h1>
       <p className="mt-2 max-w-sm text-sm text-muted">
         Same people. Same frequency. Google or X — nothing else.
