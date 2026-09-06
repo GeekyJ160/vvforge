@@ -40,6 +40,16 @@ AndroidManifest includes INTERNET only — no mic/location yet.
 - [ ] versionCode / versionName
 - [ ] Test Writer and Studio on device
 
+
+## Upload / Play App Signing key
+
+Release AABs are signed with a **Play upload keystore** (not committed).
+
+- Local config: copy `android/keystore.properties.example` → `android/keystore.properties` and set `storeFile` + passwords.
+- Keystore + password README live outside the repo (e.g. `vv-play-signing/`); never commit `*.jks`, `keystore.properties`, or password docs.
+- When `android/keystore.properties` exists, `android/app/build.gradle` wires `signingConfigs.release` for `bundleRelease`.
+- Upload the signed AAB to Play Console; Google re-signs with the app signing key.
+
 ## iOS later
 
 `npx cap add ios` on a Mac with Xcode. Not in this PR.
