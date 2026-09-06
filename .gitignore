@@ -4,3 +4,15 @@ node_modules/
 .env
 .env.*
 www/
+
+# Capacitor / Android local build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+android/local.properties
+
+# Play / release signing (never commit)
+android/keystore.properties
+*.jks
+*.keystore
