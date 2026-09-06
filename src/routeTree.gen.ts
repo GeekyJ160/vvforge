@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardRouteImport } from './routes/onboard'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AppDiscoverRouteImport } from './routes/_app/discover'
 import { Route as AppMatchesRouteImport } from './routes/_app/matches'
 import { Route as AppMeRouteImport } from './routes/_app/me'
@@ -39,6 +41,16 @@ const LoginRoute = LoginRouteImport.update({
 const OnboardRoute = OnboardRouteImport.update({
   id: '/onboard',
   path: '/onboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppDiscoverRoute = AppDiscoverRouteImport.update({
@@ -86,6 +98,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboard': typeof OnboardRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/discover': typeof AppDiscoverRoute
   '/matches': typeof AppMatchesRoute
   '/me': typeof AppMeRoute
@@ -99,6 +113,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboard': typeof OnboardRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/discover': typeof AppDiscoverRoute
   '/matches': typeof AppMatchesRoute
   '/me': typeof AppMeRoute
@@ -114,6 +130,8 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/onboard': typeof OnboardRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_app/discover': typeof AppDiscoverRoute
   '/_app/matches': typeof AppMatchesRoute
   '/_app/me': typeof AppMeRoute
@@ -129,6 +147,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/onboard'
+    | '/privacy'
+    | '/terms'
     | '/discover'
     | '/matches'
     | '/me'
@@ -142,6 +162,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/onboard'
+    | '/privacy'
+    | '/terms'
     | '/discover'
     | '/matches'
     | '/me'
@@ -156,6 +178,8 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/onboard'
+    | '/privacy'
+    | '/terms'
     | '/_app/discover'
     | '/_app/matches'
     | '/_app/me'
@@ -171,6 +195,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardRoute: typeof OnboardRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -202,6 +228,20 @@ declare module '@tanstack/react-router' {
       path: '/onboard'
       fullPath: '/onboard'
       preLoaderRoute: typeof OnboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/discover': {
@@ -300,6 +340,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardRoute: OnboardRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

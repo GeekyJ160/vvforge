@@ -106,7 +106,7 @@ function Login() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-6">
-      <p className="text-xs uppercase tracking-[0.22em] text-muted">Aura</p>
+      <p className="text-xs uppercase tracking-[0.22em] text-muted">Vicinity Vibe</p>
       <h1 className="mt-3 font-display text-4xl font-medium">
         {mode === "sign-up" ? "Create your account" : "Sign in"}
       </h1>

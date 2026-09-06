@@ -728,7 +728,7 @@ export const suggestOpeners = createServerFn({ method: "POST" })
             {
               role: "system",
               content:
-                'You write two short icebreakers for Aura, a culture-first matching app. Specific, adult, no pickup lines, no astrology, no "hey beautiful". Ground them in the given details. Return JSON only: {"openers":["...","..."]}',
+                'You write two short icebreakers for Vicinity Vibe, a culture-first matching app. Specific, adult, no pickup lines, no astrology, no "hey beautiful". Ground them in the given details. Return JSON only: {"openers":["...","..."]}',
             },
             {
               role: "user",

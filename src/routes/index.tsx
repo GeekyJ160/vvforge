@@ -41,7 +41,7 @@ function Landing() {
 
       <header className="relative pt-16">
         <p className="text-xs uppercase tracking-[0.22em] text-muted">Dallas · nearby</p>
-        <h1 className="mt-6 font-display text-6xl font-medium tracking-tight">Aura</h1>
+        <h1 className="mt-6 font-display text-6xl font-medium tracking-tight">Vicinity Vibe</h1>
         <p className="mt-3 max-w-[16ch] font-display text-2xl leading-snug text-fg/85">
           Match the frequency.
         </p>
@@ -92,7 +92,16 @@ function Landing() {
           <p className="text-sm text-muted">Sign-in is disabled.</p>
         )}
         <p className="pt-2 text-center text-xs leading-relaxed text-subtle">
-          Location stays neighborhood-level. You choose who can find you.
+          Location stays neighborhood-level. You choose who can find you. Ages 18+.
+        </p>
+        <p className="pt-3 text-center text-xs text-subtle">
+          <Link to="/privacy" className="underline-offset-4 hover:underline">
+            Privacy
+          </Link>
+          {" · "}
+          <Link to="/terms" className="underline-offset-4 hover:underline">
+            Terms
+          </Link>
         </p>
       </div>
     </main>

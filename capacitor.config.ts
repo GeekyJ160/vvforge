@@ -1,0 +1,10 @@
+import type { CapacitorConfig } from "@capacitor/cli";
+
+const config: CapacitorConfig = {
+  appId: "com.geekyj160.vicinityvibe",
+  appName: "Vicinity Vibe",
+  webDir: "www",
+  android: { allowMixedContent: false },
+};
+
+export default config;
