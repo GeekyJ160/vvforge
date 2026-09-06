@@ -20,18 +20,32 @@ export const authClient = createAuthClient({
       if (token) ctx.headers.set("Authorization", `Bearer ${token}`);
       return ctx;
     },
+    onResponse(ctx) {
+      const token = ctx.response.headers.get("set-auth-token");
+      if (token) setBearerToken(token);
+      return ctx.response;
+    },
   },
 });
 
 /**
- * True when sign-in UI should be shown. On by default (preview via the baked
- * preview client, deployed apps via the injected per-app client); set
- * `VITE_AUTH_ENABLED=false` to force it off (dev user — see `use-current-user`).
+ * True when real auth is enabled. Set `VITE_AUTH_ENABLED=false` to force it off
+ * (dev user — see `use-current-user`).
  */
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 
 /** The upstream providers to render sign-in buttons for. */
 export { GROK_PROVIDERS };
+
+/** Start first-party Google OAuth when the server has Google credentials. */
+export async function signInWithGoogle(): Promise<void> {
+  const { data, error } = await authClient.signIn.social({
+    provider: "google",
+    callbackURL: "/",
+  });
+  if (error) throw new Error(error.message ?? "Google sign-in failed");
+  if (data?.url) window.location.href = data.url;
+}
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's

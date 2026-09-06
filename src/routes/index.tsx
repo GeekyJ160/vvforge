@@ -1,13 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
+import { GROK_PROVIDERS, signIn, signInWithGoogle } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyProfile } from "@/lib/aura-api";
+import { getAuthMethods } from "@/lib/auth/config";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/")({ component: Landing });
+export const Route = createFileRoute("/")({
+  loader: () => getAuthMethods(),
+  component: Landing,
+});
 
 function Landing() {
+  const methods = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
 
@@ -51,24 +56,36 @@ function Landing() {
           <div className="h-12 animate-pulse rounded-lg bg-elevated" />
         ) : user ? (
           <p className="text-sm text-muted">Taking you in…</p>
-        ) : authEnabled ? (
+        ) : methods.enabled ? (
           <>
-            {GROK_PROVIDERS.map((p) => (
+            {methods.google ? (
               <Button
-                key={p.providerId}
                 size="lg"
-                variant={p.idp === "google" ? "primary" : "outline"}
+                variant="primary"
                 className="w-full"
-                onClick={() => void signIn(p.providerId, { callbackURL: "/" })}
+                onClick={() => void signInWithGoogle()}
               >
-                Continue with {p.label}
+                Continue with Google
               </Button>
-            ))}
+            ) : null}
+            {methods.grokBroker
+              ? GROK_PROVIDERS.map((p) => (
+                  <Button
+                    key={p.providerId}
+                    size="lg"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => void signIn(p.providerId, { callbackURL: "/" })}
+                  >
+                    Continue with {p.label}
+                  </Button>
+                ))
+              : null}
             <Link
               to="/login"
               className="mt-1 text-center text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
             >
-              Other sign-in options
+              Continue with email
             </Link>
           </>
         ) : (
